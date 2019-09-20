@@ -70,4 +70,8 @@ public class Organism {
     return description;
   }
 
+  public int totalKmers() {
+    return kmers.size();
+  }
+
 }

@@ -89,7 +89,9 @@ public class FastaParser {
    * Parse all the FASTA files in <code>inputDir</code>.
    * @throws IOException
    */
-  public void parseAllFiles(boolean verbose, int kmerLen) throws IOException {
+  public List<Organism> parseAllFiles(boolean verbose, int kmerLen) throws IOException {
+    List<Organism> organisms = new ArrayList<>();
+    // TODO: try/catch inside the loop so that we get partial results if some files are bad
     try {
       List<Path> fastaPaths =
               Files.walk(Paths.get(inputDir.getCanonicalPath()))
@@ -101,12 +103,14 @@ public class FastaParser {
 
         FastaFile ff = parseSingleFile(p);
         Organism o = representOrganism(ff, kmerLen);
+        organisms.add(o);
       }
     }
     catch (IOException e) {
       System.err.println("Caught IO Exception parsing FASTA files from " + inputDir + ": " + e);
       throw e;
     }
+    return organisms;
   }
 
 }
