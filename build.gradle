@@ -1,0 +1,7 @@
+// To build using gradle rather than IntelliJ use these command lines:
+// % gradle cleanIdea
+//
+// % gradle idea
+
+apply plugin: 'idea'
+apply plugin: 'java'
