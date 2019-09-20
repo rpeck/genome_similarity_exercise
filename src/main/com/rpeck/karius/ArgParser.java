@@ -30,6 +30,7 @@ public class ArgParser {
                     .type(String.class)
                     .longOpt("path")
                     .required()
+                    .hasArg()
                     .desc("path to the fasta files").build());
 
     options.addOption(
@@ -37,6 +38,7 @@ public class ArgParser {
                     .type(String.class)
                     .longOpt("output")
                     .required()
+                    .hasArg()
                     .desc("output path for the similarity matrix").build());
 
     options.addOption(
@@ -44,6 +46,7 @@ public class ArgParser {
                     .type(Integer.class)
                     .longOpt("kmer")
                     .required(true)
+                    .hasArg()
                     .desc("length of kmers to compare").build());
 
     options.addOption(
@@ -51,6 +54,7 @@ public class ArgParser {
                     .type(Float.class)
                     .longOpt("threshold")
                     .required(true)
+                    .hasArg()
                     .desc("fraction of kmers that must match to include a possible genome match in the output, e.g. 0.9").build());
 
     CommandLineParser parser = new DefaultParser();
@@ -74,6 +78,7 @@ public class ArgParser {
     if (cmd.hasOption("verbose"))
       System.out.println("Running: kmer-matcher."); // TODO: richer; list command-line option values
 
+    // TODO: add validations, e.g. --kmer must be > 0
     return cmd;
   }
 }
