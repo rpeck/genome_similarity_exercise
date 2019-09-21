@@ -16,51 +16,63 @@ import java.util.Set;
  *
  * Some notes on correctness and space and time efficiency:<p>
  *   1. There are easy opportunities for multithreading, which will likely be
- *   necessary for real datasets. I'll discuss those below.
+ *   necessary for real datasets. I'll discuss those below.<p>
  *
  *   2. Generation of the k-mers from the input files is O(n) in the input space
- *   (O(lineLength - kmerSize))
+ *   (O(lineLength - kmerSize))<p>
  *
  *   3. Standard Java Sets are used to hold hashes of each k-mer. Currently the
  *   hashes are 32 bits. Testing with real data is needed to determine whether there
  *   are too many collisions in the Sets. This can be done by replacing the Sets with
  *   Maps that point to the full k-mer Strings and doing a full-String compare if
  *   there's a write collision. In addition, this would be used to verify that
- *   k-mers identified by the set intersection weren't false matches.
+ *   k-mers identified by the set intersection weren't false matches.<p>
  *
  *   If there are too many collisions the first thing to do is try a better 32-bit
  *   String hash function: String.hashCode isn't the best. If that doesn't do well
  *   enough we can either replace the Sets with the Maps and always do full equality
  *   tests, or move to a 64-bit hash. Both would be at a linear cost of both space and
- *   time.
+ *   time.<p>
  *
  *   4. The number of comparisons is n^2 - n, so that operation is likely to be
  *   the bottleneck. Java Set intersection might not be a fast enough operation. If not,
  *   I'd first look around for a Set implementation that uses hashes as an index into
  *   a bit array; I forget what this technique is called. If there isn't a good one,
  *   write one. Set intersection could also be parallelized easily, since intersection is
- *   a read-only operation and we really only need a count of matches.
+ *   a read-only operation and we really only need a count of matches.<p>
  *
  *   5. The parsing of the input files, and generation of the Organism objects, can
- *   be trivially parallelized. The only contention would be on the list of Organisms.
+ *   be trivially parallelized. The only contention would be on the list of Organisms.<p>
  *
  *   6. The pairwise comparisons can be dispatched to multiple threads, but most likely
  *   it's good enough to have one controller thread walking the pairs while the
- *   parallel set intersection gives you all the parallelism you can handle.
+ *   parallel set intersection gives you all the parallelism you can handle.<p>
  *
  *   7. If multithreaded-on-one-CPU doesn't give you enough speedup then the work
  *   should be partitioned at a much coarser granularity. E.g., one could break up
  *   the dataset into 4 pieces, and have one machine compare chunk A against chunks
- *   B-D and so on.
+ *   B-D and so on.<p>
  *
  *   8. It's a harder problem to distribute if the amount of DRAM for the Sets exceeds
  *   the size of the biggest machines, since you still have to compare all-against-all...
- *   Hopefully it doesn't come to that.
+ *   Hopefully it doesn't come to that.<p>
  *
  *   9. If the amount of text is huge then take care to make sure the FastaFile objects
  *   are GC'd as the k-mers are computed. They're not needed after that. We could also
  *   represent the characters as 2-bit values in a bit string, rather than 16-bit Java
- *   chars.
+ *   chars.<p><p>
+ *
+ *   We can use the similarity information we generated here to help identify
+ *   mislabelled organisms, given a map of organism <-> species.<p>
+ *
+ *   Once we know the similarity between each organism and all the others we can
+ *   compute an average similarity between each organism and each species (cluster),
+ *   simply by averaging the similarities. E.g., the similarity between "human" and
+ *   "cetacean" would be done by averaging the similarities between "human" and
+ *   each organism in the "cetacean" cluster. This average could actually be
+ *   computed in very small time and space overhead by maintaining a sum and count
+ *   for each cluster and updating it while the pairwise similarities are first
+ *   computed, rather than waiting until the complete similaries matrix is computed.
  */
 public class Main {
 
