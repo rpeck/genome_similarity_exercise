@@ -14,8 +14,11 @@ import java.util.zip.GZIPInputStream;
 public class FastaParser {
   private File inputDir = null;
 
-  private static final char[] iupacCodes = {'R', 'Y', 'S', 'W', 'K', 'M', 'B', 'D', 'H', 'V', 'N', '.', '-'};
-  private static final Set<Byte> iupacCodeSet = new HashSet(Arrays.asList(iupacCodes));
+  private static Set<Byte> iupacCodeSet = new HashSet<>();
+  static {
+    for (char c : new char[] {'R', 'Y', 'S', 'W', 'K', 'M', 'B', 'D', 'H', 'V', 'N', '.', '-'})
+      iupacCodeSet.add((byte)c);
+  }
 
   /**
    * Create a FastaParser for the given directory.
@@ -29,14 +32,14 @@ public class FastaParser {
   /**
    * Parse a single FASTA file and return the raw input data.
    */
-  public FastaFile parseSingleFile(Path path) throws IOException {
+  static public FastaFile parseSingleFile(Path path) throws IOException {
     GZIPInputStream gzip = new GZIPInputStream(new FileInputStream(path.toFile()));
     BufferedReader reader = new BufferedReader(new InputStreamReader(gzip));
 
     String header = reader.readLine();
     StringTokenizer st = new StringTokenizer(header);
-    String version = st.nextToken();
-    String description = st.nextToken(""); // return the rest of the line
+    String version = st.nextToken().substring(1); // strip the command char
+    String description = st.nextToken("").substring(1); // return the rest of the line; strip the leading space
 
     FastaFile ff = new FastaFile(
             path.getFileName().toString(),
@@ -52,9 +55,9 @@ public class FastaParser {
   /**
    * Does this fragment contain IUPAC codes?
    */
-  private boolean containsIupacCodes(String fragment) {
+  static public boolean containsIupacCodes(String fragment) {
     for (char c : fragment.toCharArray()) {
-      if (iupacCodeSet.contains(c))
+      if (iupacCodeSet.contains((byte)c))
         return true;
     }
     return false;
@@ -63,7 +66,7 @@ public class FastaParser {
   /**
    * Represent an organism internally as a Set of kmers for efficient comparisons.
    */
-  public Organism representOrganism(FastaFile ff, int kmerLen) {
+  static public Organism representOrganism(FastaFile ff, int kmerLen) {
     Organism o = new Organism(
             ff.getOrganism(),
             ff.getVersion(),
@@ -106,7 +109,7 @@ public class FastaParser {
         try {
           ff = parseSingleFile(p);
           Organism o = representOrganism(ff, kmerLen);
-          ff = null; // try to get this to GC...
+          ff = null; // try to get this to GC... weak references might be necessary instead.
           organisms.add(o);
         } catch (IOException e) {
           System.err.println("Caught IO Exception parsing FASTA file: " + p + ": " + e);

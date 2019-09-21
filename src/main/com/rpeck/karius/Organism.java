@@ -17,6 +17,7 @@ public class Organism {
    * we'll need to add exact comparisons to the matching.
    */
   private Set<Integer> kmers;
+  private int duplicateHashes = 0;
 
   /**
    * The internal representation of an organism's genome fragments, optimized for kmer matching.
@@ -46,7 +47,12 @@ public class Organism {
   public void addFragment(String fragment, int kmerLen) {
     // TODO: add unit test to check for off-by-one errors: for now I've only manually tested...
     for (int i = 0; i < fragment.length() - kmerLen + 1; i++) {
-      kmers.add(fragment.substring(i, i + kmerLen).hashCode());
+      int hash = fragment.substring(i, i + kmerLen).hashCode();
+      if (kmers.contains(hash)) {
+        duplicateHashes++;
+      } else {
+        kmers.add(hash);
+      }
     }
   }
 
@@ -76,6 +82,10 @@ public class Organism {
 
   public int totalKmers() {
     return kmers.size();
+  }
+
+  public int duplicateHashes() {
+    return duplicateHashes;
   }
 
 }

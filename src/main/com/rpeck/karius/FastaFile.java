@@ -1,5 +1,6 @@
 package com.rpeck.karius;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -17,12 +18,12 @@ public class FastaFile {
 
   /**
    * Create a FastaFile object which represents the raw data in a FASTA file.
-   * @param organism name of the organism, taken from the filename
+   * @param filename name of the input file, to extract the name of the organism
    * @param version version of the genome, taken from the first token in the file
    * @param description taken from the rest of the tokens on the first line of the file
    */
-  public FastaFile(String organism, String version, String description) {
-    this.organism = organism;
+  public FastaFile(String filename, String version, String description) {
+    this.organism = (new File(filename)).getName().replaceFirst("_genomic.fna.gz", "");
     this.version = version;
     this.description = description;
     this.fragments = new ArrayList<>();
@@ -55,4 +56,5 @@ public class FastaFile {
   public String getDescription() {
     return description;
   }
+
 }
