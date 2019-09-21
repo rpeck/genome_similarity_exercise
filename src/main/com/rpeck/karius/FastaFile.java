@@ -15,6 +15,12 @@ public class FastaFile {
 
   private List<String> fragments;
 
+  /**
+   * Create a FastaFile object which represents the raw data in a FASTA file.
+   * @param organism name of the organism, taken from the filename
+   * @param version version of the genome, taken from the first token in the file
+   * @param description taken from the rest of the tokens on the first line of the file
+   */
   public FastaFile(String organism, String version, String description) {
     this.organism = organism;
     this.version = version;
@@ -22,10 +28,18 @@ public class FastaFile {
     this.fragments = new ArrayList<>();
   }
 
+  /**
+   * Add a fragment of a genome to this organism's file representation
+   * @param fragment
+   */
   public void addFragment(String fragment) {
     fragments.add(fragment);
   }
 
+  /**
+   * Return the fragments in a read-only way.
+   * @return an Iterator over the fragments
+   */
   public ListIterator<String> fragments() {
     return fragments.listIterator();
   }

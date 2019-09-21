@@ -20,16 +20,10 @@ public class FastaParser {
   /**
    * Create a FastaParser for the given directory.
    *
-   * TODO: throw better exception types
    * @param path path in the local filesystem for the FASTA files
    */
-  public FastaParser(String path) throws FileNotFoundException {
+  public FastaParser(String path) {
     inputDir = new File(path);
-
-    if (! inputDir.exists())
-      throw new FileNotFoundException("Specified path to FASTA files does not exist: " + path);
-    if (! inputDir.canRead())
-      throw new FileNotFoundException("Specified path to FASTA files is not readable: " + path);
   }
 
   /**
@@ -67,7 +61,7 @@ public class FastaParser {
   }
 
   /**
-   * Represent an organism internally as a bunch of kmers for efficient comparisons.
+   * Represent an organism internally as a Set of kmers for efficient comparisons.
    */
   public Organism representOrganism(FastaFile ff, int kmerLen) {
     Organism o = new Organism(
@@ -86,13 +80,20 @@ public class FastaParser {
   }
 
   /**
-   * Parse all the FASTA files in <code>inputDir</code>.
+   * Parse all the FASTA files in <code>inputDir</code>. Skips individual bad files.
    * @throws IOException
    */
   public List<Organism> parseAllFiles(boolean verbose, int kmerLen) throws IOException {
     List<Organism> organisms = new ArrayList<>();
+
+    if (! inputDir.exists())
+      throw new FileNotFoundException("Specified path to FASTA files does not exist: " + inputDir);
+    if (! inputDir.canRead())
+      throw new FileNotFoundException("Specified path to FASTA files is not readable: " + inputDir);
+    if (! inputDir.isDirectory())
+      throw new FileNotFoundException("Specified path to FASTA files is not a directory: " + inputDir);
+
     // TODO: try/catch inside the loop so that we get partial results if some files are bad
-    try {
       List<Path> fastaPaths =
               Files.walk(Paths.get(inputDir.getCanonicalPath()))
                       .filter(Files::isRegularFile)
@@ -101,15 +102,17 @@ public class FastaParser {
       for (Path p : fastaPaths) {
         if (verbose) System.out.println("Parsing FASTA file: " + p.toString());
 
-        FastaFile ff = parseSingleFile(p);
-        Organism o = representOrganism(ff, kmerLen);
-        organisms.add(o);
+        FastaFile ff;
+        try {
+          ff = parseSingleFile(p);
+          Organism o = representOrganism(ff, kmerLen);
+          ff = null; // try to get this to GC...
+          organisms.add(o);
+        } catch (IOException e) {
+          System.err.println("Caught IO Exception parsing FASTA file: " + p + ": " + e);
+        }
       }
-    }
-    catch (IOException e) {
-      System.err.println("Caught IO Exception parsing FASTA files from " + inputDir + ": " + e);
-      throw e;
-    }
+
     return organisms;
   }
 
